@@ -371,14 +371,24 @@ function applyTheme(t) {
   document.documentElement.dataset.theme = t;
   document.getElementById('themeBtn').textContent = t === 'light' ? '☀️ 浅色' : '🌙 深色';
 }
-let theme = localStorage.getItem('radar-theme') || 'dark';
+// 默认跟随系统肤色；用户手动点过切换按钮则记住其选择(radar-theme)并覆盖系统。
+var _mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+function _sysTheme() { return (_mq && _mq.matches === false) ? 'light' : 'dark'; }
+function _stored() { try { return localStorage.getItem('radar-theme'); } catch (e) { return null; } }
+let theme = _stored() || _sysTheme();
 applyTheme(theme);
 document.getElementById('themeBtn').onclick = () => {
   theme = theme === 'light' ? 'dark' : 'light';
-  localStorage.setItem('radar-theme', theme);
+  try { localStorage.setItem('radar-theme', theme); } catch (e) {}
   applyTheme(theme);
 };
-// 另一看板(同源 iframe)切主题时，本页实时跟随
+// 系统肤色变化时：仅当用户未手动覆盖过(无 localStorage)才实时跟随
+if (_mq) {
+  _mq.addEventListener('change', () => {
+    if (!_stored()) { theme = _sysTheme(); applyTheme(theme); }
+  });
+}
+// 另一看板(同源 iframe)手动切主题时，本页实时跟随
 window.addEventListener('storage', (e) => {
   if (e.key === 'radar-theme' && e.newValue && e.newValue !== theme) {
     theme = e.newValue;
