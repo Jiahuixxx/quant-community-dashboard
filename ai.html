@@ -27,6 +27,7 @@
   .pcol .pick:first-of-type { border-top:none; }
   .pick a { color:var(--acc); text-decoration:none; }
   .pick a:hover { text-decoration:underline; }
+  .pgist { display:block; color:var(--fg2); font-size:12px; margin:2px 0 1px; }
   .pmeta { display:block; color:var(--mut); font-size:11px; margin-top:2px; }
   .chips { display:flex; gap:8px; flex-wrap:wrap; }
   .chip { background:var(--card); border:1px solid var(--line); border-radius:999px; padding:5px 12px; cursor:pointer; font-size:12px; color:var(--fg); user-select:none; }
@@ -421,14 +422,19 @@ function renderPicks() {
     .slice(0, 12);
   if (!gh.length && !ax.length) { box.style.display = 'none'; return; }
   const star = s => (s>=10000?(s/10000).toFixed(1)+'万':(s>=1000?(s/1000).toFixed(1)+'k':s));
+  const gist = (arr, n, max) => { const g=(arr||[]).slice(0,n).join(' · '); return g.length>max?g.slice(0,max)+'…':g; };
   const ghItem = p => {
     const e = p.engagement||{};
+    const g = gist(e.topics && e.topics.length ? e.topics : p.keywords, 3, 18);
     return `<div class="pick"><a href="${esc(p.url)}" target="_blank">${esc(p.title)}</a>`+
+           (g?`<span class="pgist">🏷️ ${esc(g)}</span>`:'')+
            `<span class="pmeta">⭐${star(e.stars||0)} · 🍴${e.forks||0} · ${esc(e.language||'?')}</span></div>`;
   };
   const axItem = p => {
     const e = p.engagement||{};
+    const g = gist(p.keywords && p.keywords.length ? p.keywords : [e.primary_category], 3, 20);
     return `<div class="pick"><a href="${esc(p.url)}" target="_blank">${esc(p.title)}</a>`+
+           (g?`<span class="pgist">🏷️ ${esc(g)}</span>`:'')+
            `<span class="pmeta">📅${esc(p.created_est||'?')} · ${esc(e.primary_category||'')} · ${esc(p.author||'')}</span></div>`;
   };
   let html = '<div class="section-title">🎓 学术 · 开源精选</div><div class="picks-grid">';
