@@ -409,10 +409,14 @@ window.addEventListener('storage', (e) => {
 function renderPicks() {
   const box = document.getElementById('picks');
   if (!box) return;
-  const gh = POSTS.filter(p => p.source === 'github')
-    .sort((a,b) => (((b.engagement||{}).stars)||b.heat||0) - (((a.engagement||{}).stars)||a.heat||0))
+  const _now = new Date();
+  const _cut = new Date(_now.getFullYear(), _now.getMonth() - 3, _now.getDate());
+  const SINCE = _cut.toISOString().slice(0, 10);   // 近3个月起始日
+  const recent = p => String(p.created_est || '') >= SINCE;
+  const gh = POSTS.filter(p => p.source === 'github' && (((p.engagement||{}).stars)||0) >= 1000 && recent(p))
+    .sort((a,b) => (((b.engagement||{}).stars)||0) - (((a.engagement||{}).stars)||0))
     .slice(0, 12);
-  const ax = POSTS.filter(p => p.source === 'arxiv')
+  const ax = POSTS.filter(p => p.source === 'arxiv' && recent(p))
     .sort((a,b) => String(b.created_est||'').localeCompare(String(a.created_est||'')))
     .slice(0, 12);
   if (!gh.length && !ax.length) { box.style.display = 'none'; return; }
@@ -428,8 +432,8 @@ function renderPicks() {
            `<span class="pmeta">📅${esc(p.created_est||'?')} · ${esc(e.primary_category||'')} · ${esc(p.author||'')}</span></div>`;
   };
   let html = '<div class="section-title">🎓 学术 · 开源精选</div><div class="picks-grid">';
-  if (gh.length) html += `<div class="pcol"><div class="pchead">⭐ GitHub 高星项目 · ${gh.length}</div>${gh.map(ghItem).join('')}</div>`;
-  if (ax.length) html += `<div class="pcol"><div class="pchead">📄 arXiv 最新论文 · ${ax.length}</div>${ax.map(axItem).join('')}</div>`;
+  if (gh.length) html += `<div class="pcol"><div class="pchead">⭐ GitHub 高星项目 <span class="pmeta" style="display:inline">≥1k⭐·近3月</span> · ${gh.length}</div>${gh.map(ghItem).join('')}</div>`;
+  if (ax.length) html += `<div class="pcol"><div class="pchead">📄 arXiv 最新论文 <span class="pmeta" style="display:inline">近3月</span> · ${ax.length}</div>${ax.map(axItem).join('')}</div>`;
   html += '</div>';
   box.innerHTML = html;
 }
